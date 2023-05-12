@@ -15,15 +15,18 @@
       <button onclick="connect()">Connect</button>
       <button onclick="disconnect()">Disconnect</button>
     </div>
-    <div style="display: flex">
-      <div>
+    <div style="display: flex;">
+      <div style="width: 640px">
         <p>Local: </p>
         <video id="local-video" autoplay />
       </div>
-      <div>
+      <div style="width: 640px">
         <p>Remote: </p>
         <video id="remote-video" autoplay />
       </div>
+    </div>
+    <div>
+      <textarea id="local-sdp" style="width: 640px"></textarea>
     </div>
   </section>
 </body>
