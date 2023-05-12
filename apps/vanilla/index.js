@@ -1,10 +1,10 @@
-/** @type {RTCPeerConnection} */
+/** @type {RTCPeerConnection|null} */
 let peer = null;
 
-/** @type {MediaStream} */
+/** @type {MediaStream|null} */
 let localStream = null;
 
-/** @type {MediaStream} */
+/** @type {MediaStream|null} */
 let remoteStream = null;
 
 /** @type {HTMLVideoElement} */
@@ -16,6 +16,8 @@ const remoteVideo = document.getElementById("remote-video");
 /** @type {HTMLTextAreaElement} */
 const localSdp = document.getElementById("local-sdp");
 
+/** @type {HTMLTextAreaElement} */
+const remoteSdp = document.getElementById("remote-sdp");
 
 /**
  * 引数のストリームをエレメントに設定&再生させます。
@@ -39,9 +41,77 @@ async function startVideo() {
     .catch(console.error)
 };
 
-function connect() {
-  _offer();
+/** オファーを生成します。 */
+async function offer() {
+  if (peer) return;
+
+  peer = await createPeerConnection();
+  peer.createOffer().then(offerSDP => {
+    peer.setLocalDescription(offerSDP);
+    sendSdp(offerSDP)
+  });
+
+  document.getElementById('answer-btn')?.setAttribute('disabled', true);
+  document.getElementById('connect-btn')?.removeAttribute('disabled');
+  document.getElementById('disconnect-btn')?.removeAttribute('disabled');
 }
+
+/** アンサーを生成します */
+async function answer() {
+  if (peer) return;
+  if (remoteSdp.value === '') return;
+
+  peer = await createPeerConnection();
+  peer.setRemoteDescription(JSON.parse(remoteSdp.value))
+    .then(() => peer.createAnswer())
+    .then(answerSDP => {
+      peer.setLocalDescription(answerSDP);
+      sendSdp(answerSDP)
+    });
+
+  document.getElementById('offer-btn')?.setAttribute('disabled', true);
+  document.getElementById('answer-btn')?.setAttribute('disabled', true);
+  document.getElementById('disconnect-btn')?.removeAttribute('disabled');
+};
+
+/** P2P 接続を開始します */
+async function connect() {
+  if (peer === null) return;
+  if (remoteSdp.value === '') return;
+
+  await peer.setRemoteDescription(JSON.parse(remoteSdp.value));
+
+  document.getElementById('offer-btn')?.setAttribute('disabled', true);
+  document.getElementById('connect-btn')?.setAttribute('disabled', true);
+};
+
+/** P2P接続を切断します */
+async function disconnect() {
+  if (peer === null) return;
+  if (peer.iceConnectionState !== 'closed') {
+    peer.close();
+    peer = null;
+  }
+
+  init();
+};
+
+function init() {
+  remoteVideo.pause();
+  remoteVideo.srcObject = null;
+  localVideo.pause();
+  localVideo.srcObject = null;
+
+  localStream = null;
+  remoteStream = null;
+  localSdp.value = '';
+  remoteSdp.value = '';
+
+  document.getElementById('offer-btn')?.removeAttribute('disabled');
+  document.getElementById('answer-btn')?.removeAttribute('disabled');
+  document.getElementById('connect-btn')?.setAttribute('disabled', true);
+  document.getElementById('disconnect-btn')?.setAttribute('disabled', true);
+};
 
 /**
  * SDP を送信します。
@@ -50,13 +120,13 @@ function connect() {
  */
 function sendSdp(sessionDescription) {
   // TODO: sending SDP with a signaling server.
-  localSdp.value = sessionDescription.sdp;
+  localSdp.value = JSON.stringify(sessionDescription);
 };
 
 /**
- * オファー要求を行います。
+ * RTCPeerConnection の生成とコールバックの登録を行います。
  */
-async function _offer() {
+async function createPeerConnection() {
   const config = { "iceServers": [{ "urls": "stun:stun.l.google.com:19302" }] };
   const pc = new RTCPeerConnection(config);
 
@@ -85,20 +155,25 @@ async function _offer() {
       // 同時に他に良い候補がないかも接続を確認している可能性がある。
 
       case 'completed':
-      // ICE エージェントは全ての候補に対して接続確認を行い、最良の候補で接続を確立した。
-
+        // ICE エージェントは全ての候補に対して接続確認を行い、最良の候補で接続を確立した。
+        break;
       case 'failed':
-      // ICE エージェントは全ての候補に対して接続確認を行い、1つ以上の組み合わせで接続の発見に失敗した状態。
-      // 他の候補では接続が確率した可能性がある。
-
+        // ICE エージェントは全ての候補に対して接続確認を行い、1つ以上の組み合わせで接続の発見に失敗した状態。
+        // 他の候補では接続が確率した可能性がある。
+        disconnect();
+        break;
       case 'disconnected':
-      // RTCPeerConnection の接続性確認に失敗している状態。
-      // 'failed' よりも厳密ではなく、不安定なネットワーク環境下などで断続的に発生する可能性があり、
-      // 問題が解決すると 'connected' に戻ることがあります。
-
+        // RTCPeerConnection の接続性確認に失敗している状態。
+        // 'failed' よりも厳密ではなく、不安定なネットワーク環境下などで断続的に発生する可能性があり、
+        // 問題が解決すると 'connected' に戻ることがあります。
+        const timer = setTimeout(() => {
+          if (pc.iceConnectionState === 'disconnected') disconnect();
+          clearInterval(timer);
+        }, 10 * 1000);
+        break;
       case 'closed':
-      // ICE エージェントはシャットダウンしており、STUN リクエストには応答できない状態。
-
+        // ICE エージェントはシャットダウンしており、STUN リクエストには応答できない状態。
+        break;
     };
   };
 
@@ -112,13 +187,14 @@ async function _offer() {
     };
   };
 
+  // リモートの MediaStream が追加された際のコールバック
+  pc.ontrack = (event) => {
+    remoteStream = event.streams[0];
+    playVideo(remoteVideo, remoteStream);
+  }
+
   if (!localStream) await startVideo();
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-  pc.createOffer().then(offer => {
-    pc.setLocalDescription(offer);
-    sendSdp(offer)
-  });
-
-
+  return pc;
 };

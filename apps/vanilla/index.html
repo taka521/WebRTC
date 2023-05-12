@@ -11,9 +11,10 @@
 <body>
   <section>
     <div>
-      <button onclick="startVideo()">Start Video</button>
-      <button onclick="connect()">Connect</button>
-      <button onclick="disconnect()">Disconnect</button>
+      <button id="offer-btn" onclick="offer()">offer</button>
+      <button id="answer-btn" onclick="answer()">answer</button>
+      <button id="connect-btn" onclick="connect()" disabled>connect</button>
+      <button id="disconnect-btn" onclick="disconnect()" disabled>disconnect</button>
     </div>
     <div style="display: flex;">
       <div style="width: 640px">
@@ -25,8 +26,9 @@
         <video id="remote-video" autoplay />
       </div>
     </div>
-    <div>
+    <div style="display: flex;">
       <textarea id="local-sdp" style="width: 640px"></textarea>
+      <textarea id="remote-sdp" style="width: 640px"></textarea>
     </div>
   </section>
 </body>
