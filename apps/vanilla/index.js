@@ -60,6 +60,15 @@ async function _offer() {
   const config = { "iceServers": [{ "urls": "stun:stun.l.google.com:19302" }] };
   const pc = new RTCPeerConnection(config);
 
+  // ICE Candidate の発見
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      console.log(`ICE Candidate:`, event.candidate.toJSON());
+    } else {
+      sendSdp(pc.localDescription);
+    }
+  };
+
   if (!localStream) await startVideo();
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
