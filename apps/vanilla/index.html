@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vanilla WebRTC</title>
+</head>
+
+<body>
+  <section>
+    <div>
+      <button id="offer-btn" onclick="offer()">offer</button>
+      <button id="answer-btn" onclick="answer()">answer</button>
+      <button id="connect-btn" onclick="connect()" disabled>connect</button>
+      <button id="disconnect-btn" onclick="disconnect()" disabled>disconnect</button>
+    </div>
+    <div style="display: flex;">
+      <div style="width: 640px">
+        <p>Local: </p>
+        <video id="local-video" autoplay />
+      </div>
+      <div style="width: 640px">
+        <p>Remote: </p>
+        <video id="remote-video" autoplay />
+      </div>
+    </div>
+    <div style="display: flex;">
+      <textarea id="local-sdp" style="width: 640px"></textarea>
+      <textarea id="remote-sdp" style="width: 640px"></textarea>
+    </div>
+  </section>
+</body>
+<script src="./index.js"></script>
+
+</html>

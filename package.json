@@ -1,0 +1,13 @@
+{
+  "name": "webrtc",
+  "version": "0.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:taka521/WebRTC.git",
+  "author": "taka521",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
