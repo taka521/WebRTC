@@ -21,7 +21,7 @@ const remoteSdp = document.getElementById("remote-sdp");
 
 /**
  * 引数のストリームをエレメントに設定&再生させます。
- * 
+ *
  * @param {HTMLVideoElement} element
  * @param {MediaStream} stream
  */
@@ -115,8 +115,8 @@ function init() {
 
 /**
  * SDP を送信します。
- * 
- * @param {RTCSessionDescriptionInit} sessionDescription 
+ *
+ * @param {RTCSessionDescriptionInit} sessionDescription
  */
 function sendSdp(sessionDescription) {
   // TODO: sending SDP with a signaling server.
